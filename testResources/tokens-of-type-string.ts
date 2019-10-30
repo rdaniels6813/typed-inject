@@ -1,4 +1,4 @@
-// error: "Type 'string[]' is not assignable to type 'InjectionToken<TChildContext<{}, number, \"bar\">>[]'"
+// error: "Type 'string[]' is not assignable to type 'InjectionToken<TChildContext<number, \"bar\">>[]'"
 
 import { rootInjector } from '../src/index';
 

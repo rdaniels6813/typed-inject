@@ -8,10 +8,10 @@ export interface Injector<TContext = {}> {
   injectFunction<R, Tokens extends InjectionToken<TContext>[]>(Class: InjectableFunction<TContext, R, Tokens>): R;
   resolve<Token extends keyof TContext>(token: Token): TContext[Token];
   provideValue<Token extends string, R>(token: Token, value: R)
-    : Injector<TChildContext<TContext, R, Token>>;
+    : Injector<TContext & TChildContext<R, Token>>;
   provideClass<Token extends string, R, Tokens extends InjectionToken<TContext>[]>(token: Token, Class: InjectableClass<TContext, R, Tokens>, scope?: Scope)
-    : Injector<TChildContext<TContext, R, Token>>;
+    : Injector<TContext & TChildContext<R, Token>>;
   provideFactory<Token extends string, R, Tokens extends InjectionToken<TContext>[]>(token: Token, factory: InjectableFunction<TContext, R, Tokens>, scope?: Scope)
-    : Injector<TChildContext<TContext, R, Token>>;
+    : Injector<TContext & TChildContext<R, Token>>;
   dispose(): Promise<void>;
 }

@@ -66,16 +66,16 @@ abstract class AbstractInjector<TContext> implements Injector<TContext>  {
   }
 
   public provideValue<Token extends string, R>(token: Token, value: R)
-    : AbstractInjector<TChildContext<TContext, R, Token>> {
+    : AbstractInjector<TContext & TChildContext<R, Token>> {
     return new ValueProvider(this, token, value);
   }
 
   public provideClass<Token extends string, R, Tokens extends InjectionToken<TContext>[]>(token: Token, Class: InjectableClass<TContext, R, Tokens>, scope = DEFAULT_SCOPE)
-    : AbstractInjector<TChildContext<TContext, R, Token>> {
+    : AbstractInjector<TContext & TChildContext<R, Token>> {
     return new ClassProvider(this, token, scope, Class);
   }
   public provideFactory<Token extends string, R, Tokens extends InjectionToken<TContext>[]>(token: Token, factory: InjectableFunction<TContext, R, Tokens>, scope = DEFAULT_SCOPE)
-    : AbstractInjector<TChildContext<TContext, R, Token>> {
+    : AbstractInjector<TContext & TChildContext<R, Token>> {
     return new FactoryProvider(this, token, scope, factory);
   }
 
@@ -98,7 +98,7 @@ class RootInjector extends AbstractInjector<{}> {
   }
 }
 
-abstract class ChildInjector<TParentContext, TProvided, CurrentToken extends string> extends AbstractInjector<TChildContext<TParentContext, TProvided, CurrentToken>> {
+abstract class ChildInjector<TParentContext, TProvided, CurrentToken extends string> extends AbstractInjector<(TParentContext & TChildContext<TProvided, CurrentToken>)> {
 
   private cached: { value?: any } | undefined;
   private readonly disposables = new Set<Disposable>();
@@ -107,6 +107,13 @@ abstract class ChildInjector<TParentContext, TProvided, CurrentToken extends str
               protected readonly token: CurrentToken,
               private readonly scope: Scope) {
     super();
+    let currentParent: any = this.parent;
+    while (currentParent) {
+      if (currentParent.token && this.token === currentParent.token) {
+        throw new Exception(`Token: ${this.token} is already used on this injector.`);
+      }
+      currentParent = currentParent.parent;
+    } 
   }
 
   protected abstract responsibleForDisposing: boolean;
@@ -115,17 +122,17 @@ abstract class ChildInjector<TParentContext, TProvided, CurrentToken extends str
   protected isDisposed = false;
 
   public injectClass
-    <R, Tokens extends InjectionToken<TChildContext<TParentContext, TProvided, CurrentToken>>[]>(Class: InjectableClass<TChildContext<TParentContext, TProvided, CurrentToken>, R, Tokens>, providedIn?: Function): R {
+    <R, Tokens extends InjectionToken<(TParentContext & TChildContext<TProvided, CurrentToken>)>[]>(Class: InjectableClass<(TParentContext & TChildContext<TProvided, CurrentToken>), R, Tokens>, providedIn?: Function): R {
     this.throwIfDisposed(Class);
     return super.injectClass(Class, providedIn);
   }
   public injectFunction
-    <R, Tokens extends InjectionToken<TChildContext<TParentContext, TProvided, CurrentToken>>[]>(fn: InjectableFunction<TChildContext<TParentContext, TProvided, CurrentToken>, R, Tokens>, providedIn?: Function): R {
+    <R, Tokens extends InjectionToken<(TParentContext & TChildContext<TProvided, CurrentToken>)>[]>(fn: InjectableFunction<(TParentContext & TChildContext<TProvided, CurrentToken>), R, Tokens>, providedIn?: Function): R {
     this.throwIfDisposed(fn);
     return super.injectFunction(fn, providedIn);
   }
 
-  public resolve<Token extends keyof TChildContext<TParentContext, TProvided, CurrentToken>>(token: Token, target?: Function): TChildContext<TParentContext, TProvided, CurrentToken>[Token] {
+  public resolve<Token extends keyof (TParentContext & TChildContext<TProvided, CurrentToken>)>(token: Token, target?: Function): (TParentContext & TChildContext<TProvided, CurrentToken>)[Token] {
     this.throwIfDisposed(token);
     return super.resolve(token, target);
   }
@@ -157,8 +164,8 @@ abstract class ChildInjector<TParentContext, TProvided, CurrentToken extends str
     await Promise.all(promisesToAwait);
   }
 
-  protected resolveInternal<SearchToken extends keyof TChildContext<TParentContext, TProvided, CurrentToken>>(token: SearchToken, target: Function | undefined)
-    : TChildContext<TParentContext, TProvided, CurrentToken>[SearchToken] {
+  protected resolveInternal<SearchToken extends keyof (TParentContext & TChildContext<TProvided, CurrentToken>)>(token: SearchToken, target: Function | undefined)
+    : (TParentContext & TChildContext<TProvided, CurrentToken>)[SearchToken] {
     if (token === this.token) {
       if (this.cached) {
         return this.cached.value as any;
