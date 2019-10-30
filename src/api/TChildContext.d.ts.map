@@ -1,0 +1,1 @@
+{"version":3,"file":"TChildContext.d.ts","sourceRoot":"","sources":["TChildContext.ts"],"names":[],"mappings":"AAAA,oBAAY,aAAa,CAAC,SAAS,EAAE,YAAY,SAAS,MAAM,IAAI;KACjE,CAAC,IAAI,MAAM,CAAC;SAAG,CAAC,IAAI,YAAY,GAAG,SAAS;KAAE,CAAC,GAAG,CAAC,SAAS,YAAY,GAAG,SAAS,GAAG,KAAK;CAC9F,CAAC"}
